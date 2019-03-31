@@ -1,0 +1,40 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:padding="@dimen/widget_margin">
+
+        <ImageView
+                app:srcCompat="@drawable/skip_previous"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:id="@+id/skip_previous"/>
+        <ImageView
+
+                app:srcCompat="@drawable/rewind_30"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:id="@+id/rewind_30"/>
+        <ImageView
+                app:srcCompat="@drawable/play_pause"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:id="@+id/play_pause"/>
+        <ImageView
+
+                app:srcCompat="@drawable/fast_forward_30"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:id="@+id/forward_30"/>
+        <ImageView
+                app:srcCompat="@drawable/skip_next"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:id="@+id/skip_next"/>
+
+</LinearLayout>

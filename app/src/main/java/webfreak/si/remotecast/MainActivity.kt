@@ -1,83 +1,55 @@
 package webfreak.si.remotecast
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
-import androidx.mediarouter.media.*
+import android.os.Handler
+import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import su.litvak.chromecast.api.v2.ChromeCasts
+import su.litvak.chromecast.api.v2.MediaStatus
 
 
 class MainActivity : AppCompatActivity() {
-
-    private var mediaRouter: MediaRouter? = null
-    private var mSelector: MediaRouteSelector? = null
-
-    // Variables to hold the currently selected route and its playback client
-    private var mRoute: MediaRouter.RouteInfo? = null
-    private var remotePlaybackClient: RemotePlaybackClient? = null
-    private val TAG = "MainActivity"
-    private var playing = true
-    // Define the Callback object and its methods, save the object in a class variable
-    private val mediaRouterCallback = object : MediaRouter.Callback() {
-        override fun onRouteChanged(router: MediaRouter?, route: MediaRouter.RouteInfo?) {
-            super.onRouteChanged(router, route)
-            mRoute = route
-            remotePlaybackClient = RemotePlaybackClient(this@MainActivity, mRoute)
-            remotePlaybackClient!!.startSession(Bundle.EMPTY, sessionCallback)
-            Log.d(TAG, "ROUTE CHANGED")
-        }
-    }
-    private val resumeCallback = object : RemotePlaybackClient.SessionActionCallback() {
-        override fun onResult(data: Bundle?, sessionId: String?, sessionStatus: MediaSessionStatus?) {
-            super.onResult(data, sessionId, sessionStatus)
-            Log.d(TAG, "RESULT")
-        }
-    }
-
-    private val pauseCallback = object : RemotePlaybackClient.SessionActionCallback() {
-        override fun onResult(data: Bundle?, sessionId: String?, sessionStatus: MediaSessionStatus?) {
-            super.onResult(data, sessionId, sessionStatus)
-            Log.d(TAG, "RESULT")
-        }
-    }
-
-    private val sessionCallback = object : RemotePlaybackClient.SessionActionCallback() {
-        override fun onResult(data: Bundle?, sessionId: String?, sessionStatus: MediaSessionStatus?) {
-            super.onResult(data, sessionId, sessionStatus)
-            Log.d(TAG, "RESULT")
-        }
-    }
+    private val job = Job()
+    private val mainScope = CoroutineScope(Dispatchers.Default + job)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        mediaRouter = MediaRouter.getInstance(this)
-        mSelector = MediaRouteSelector.Builder()
-            // These are the framework-supported intents
-            .addControlCategory(MediaControlIntent.CATEGORY_REMOTE_PLAYBACK)
-            .build()
-
         button2.setOnClickListener {
-            if (playing) {
-                remotePlaybackClient?.pause(Bundle.EMPTY, pauseCallback)
-            } else {
-                remotePlaybackClient?.resume(Bundle.EMPTY, resumeCallback)
-            }
+            togglePlaying()
+        }
+
+        val handler = Handler()
+        val runnable = Runnable {
+            Prefs(this@MainActivity).IP = ChromeCasts.get()?.first()?.address ?: ""
+        }
+        handler.postDelayed(runnable, 2000)
+
+    }
+
+    private fun togglePlaying() {
+        mainScope.launch {
+            val status = ChromeCasts.get()?.first()?.mediaStatus?.playerState
+            if (status == MediaStatus.PlayerState.PLAYING) ChromeCasts.get()?.first()?.pause() else ChromeCasts.get()?.first()?.play()
         }
     }
+
     override fun onStart() {
-        mSelector?.also { selector ->
-            mediaRouter?.addCallback(selector, mediaRouterCallback, MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY)
+        mainScope.launch {
+            ChromeCasts.startDiscovery()
+
         }
         super.onStart()
     }
 
     override fun onStop() {
-        mediaRouter?.removeCallback(mediaRouterCallback)
-        mRoute?.also {
-            remotePlaybackClient?.release()
-            remotePlaybackClient = null
+        mainScope.launch {
+            ChromeCasts.stopDiscovery()
         }
         super.onStop()
     }
