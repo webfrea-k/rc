@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="webfreak.si.remotecast">
+          xmlns:tools="http://schemas.android.com/tools" package="webfreak.si.remotecast">
 
     <uses-permission android:name="android.permission.INTERNET"/>
 
@@ -10,7 +10,7 @@
             android:label="@string/app_name"
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
-            android:theme="@style/AppTheme">
+            android:theme="@style/AppTheme" tools:ignore="GoogleAppIndexingWarning">
         <receiver android:name=".RemoteControl">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
@@ -21,6 +21,11 @@
                     android:resource="@xml/remote_control_info"/>
         </receiver>
 
+        <activity android:name=".RemoteControlConfigureActivity">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
+            </intent-filter>
+        </activity>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

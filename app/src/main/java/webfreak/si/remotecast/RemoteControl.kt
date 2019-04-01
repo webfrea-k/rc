@@ -37,7 +37,7 @@ class RemoteControl : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         mainScope.launch {
-            cc = ChromeCast(Prefs(context).IP)
+            cc = ChromeCast(Prefs(context).getChromecasts().first().second)
         }
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
@@ -66,7 +66,7 @@ class RemoteControl : AppWidgetProvider() {
         if(context == null) { return }
 
         mainScope.launch {
-            cc = ChromeCast(Prefs(context).IP)
+            cc = ChromeCast(Prefs(context).getChromecasts().first().second)
             val mediaStatus = cc?.mediaStatus
             val duration = mediaStatus?.media?.duration ?: 0.0
             val currentTime = mediaStatus?.currentTime ?: 0.0
@@ -98,20 +98,20 @@ class RemoteControl : AppWidgetProvider() {
     private fun showToast(context: Context?, message: String) {
         uiScope.launch {
             if(context != null)
-            Toast.makeText(context, message,Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, message,Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun reconnectChromecastIfNeeded(context: Context?) {
         if(cc == null && context != null) {
-            cc = ChromeCast(Prefs(context).IP)
+            cc = ChromeCast(Prefs(context).getChromecasts().first().second)
         }
     }
 
     override fun onEnabled(context: Context) {
         mainScope.launch {
             if(cc == null) {
-                cc = ChromeCast(Prefs(context).IP)
+                cc = ChromeCast(Prefs(context).getChromecasts().first().second)
             }
         }
     }
