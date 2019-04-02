@@ -7,26 +7,19 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.widget.RemoteViews
-import android.widget.Toast
 import su.litvak.chromecast.api.v2.ChromeCast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import su.litvak.chromecast.api.v2.MediaStatus
+import webfreak.si.remotecast.Utils.Companion.showToast
+import webfreak.si.remotecast.Utils.Companion.updateRemotePlay
 
 
 /**
  * Implementation of App Widget functionality.
  */
-
-enum class Control {
-    SKIP_PREVIOUS,
-    BACK_30,
-    PLAY_PAUSE,
-    FORWARD_30,
-    SKIP_NEXT
-}
 
 class RemoteControl : AppWidgetProvider() {
     private val job = Job()
@@ -37,7 +30,7 @@ class RemoteControl : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         mainScope.launch {
-            cc = ChromeCast(Prefs(context).getChromecasts().first().second)
+            cc = ChromeCast(Prefs(context).getChromecasts().firstOrNull()?.address)
         }
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
@@ -48,12 +41,14 @@ class RemoteControl : AppWidgetProvider() {
 
     override fun onReceive(context: Context?, intent: Intent?) {
         if (intent?.action == null && intent?.hasExtra("ID") == true) {
+            cc = ChromeCast(Prefs(context!!).getChromecasts().firstOrNull()?.address)
+
             when(intent.extras?.getInt("ID")) {
-                0 -> updateRemotePlay(context!!, Control.SKIP_PREVIOUS)
-                1 -> updateRemotePlay(context!!, Control.BACK_30)
-                2 -> updateRemotePlay(context!!, Control.PLAY_PAUSE)
-                3 -> updateRemotePlay(context!!, Control.FORWARD_30)
-                4 -> updateRemotePlay(context!!, Control.SKIP_NEXT)
+                0 -> updateRemotePlay(context!!, cc, Control.SKIP_PREVIOUS)
+                1 -> updateRemotePlay(context!!, cc,Control.BACK_30)
+                2 -> updateRemotePlay(context!!, cc,Control.PLAY_PAUSE)
+                3 -> updateRemotePlay(context!!, cc,Control.FORWARD_30)
+                4 -> updateRemotePlay(context!!, cc,Control.SKIP_NEXT)
                 else -> Log.d("INTENT", "NULL")
             }
 
@@ -62,56 +57,16 @@ class RemoteControl : AppWidgetProvider() {
         }
     }
 
-    private fun updateRemotePlay(context: Context? ,control: Control) {
-        if(context == null) { return }
-
-        mainScope.launch {
-            cc = ChromeCast(Prefs(context).getChromecasts().first().second)
-            val mediaStatus = cc?.mediaStatus
-            val duration = mediaStatus?.media?.duration ?: 0.0
-            val currentTime = mediaStatus?.currentTime ?: 0.0
-            when (control) {
-                Control.SKIP_PREVIOUS -> {
-                    cc?.seek(0.0)
-                    showToast(context, "From beginning")
-                }
-                Control.BACK_30 -> {
-                    cc?.seek(if(currentTime > 30) currentTime - 30 else 0.0)
-                    showToast(context, "-30s")
-                }
-                Control.PLAY_PAUSE -> {
-                    if(mediaStatus?.playerState == MediaStatus.PlayerState.PLAYING) cc?.pause() else cc?.play()
-                    showToast(context,  "Toggle Play/Pause")
-                }
-                Control.FORWARD_30 -> {
-                    cc?.seek(if((currentTime + 30) < duration) currentTime + 30 else duration)
-                    showToast(context, "+30s")
-                }
-                Control.SKIP_NEXT -> {
-                    cc?.seek(duration)
-                    showToast(context, "To end")
-                }
-            }
-        }
-    }
-
-    private fun showToast(context: Context?, message: String) {
-        uiScope.launch {
-            if(context != null)
-                Toast.makeText(context, message,Toast.LENGTH_SHORT).show()
-        }
-    }
-
     private fun reconnectChromecastIfNeeded(context: Context?) {
         if(cc == null && context != null) {
-            cc = ChromeCast(Prefs(context).getChromecasts().first().second)
+            cc = ChromeCast(Prefs(context).getChromecasts().firstOrNull()?.address)
         }
     }
 
     override fun onEnabled(context: Context) {
         mainScope.launch {
             if(cc == null) {
-                cc = ChromeCast(Prefs(context).getChromecasts().first().second)
+                cc = ChromeCast(Prefs(context).getChromecasts().firstOrNull()?.address)
             }
         }
     }
